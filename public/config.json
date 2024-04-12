@@ -1,0 +1,8 @@
+{
+  "bff": "http://localhost:8080",
+  "env": "mainnet-v1.0",
+  "envName": "Algorand Mainnet",
+  "algodHost": "http://localhost",
+  "algodPort": 4001,
+  "algodToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
