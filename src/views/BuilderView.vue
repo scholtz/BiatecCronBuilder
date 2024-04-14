@@ -4,6 +4,9 @@ import Blockly from 'blockly'
 import BlocklyComponent from '../components/BlocklyComponent.vue'
 import '../blocks/folks/oracle'
 import '../blocks/algorand/pay'
+import '../blocks/algorand/sc_balance'
+import '../blocks/algorand/assert'
+
 import ProgressSpinner from 'primevue/progressspinner'
 
 import Textarea from 'primevue/textarea'
@@ -291,6 +294,8 @@ const copyLink = () => {
           </category>
           <category name="Algorand" colour="teal">
             <block type="pay"></block>
+            <block type="sc_balance"></block>
+            <block type="assert"></block>
           </category>
           <category name="Folks" colour="blue">
             <block type="folks_oracle"></block>

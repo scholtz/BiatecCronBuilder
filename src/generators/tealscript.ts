@@ -173,19 +173,19 @@ tealScriptGenerator.forBlock['variables_set'] = (block, generator) => {
 // folks-oracle@v1
 tealScriptGenerator.forBlock['folks_oracle'] = (block, generator) => {
   try {
+    // Variable setter.
+    const argumentContract = generator.valueToCode(block, 'contract', Order.ASSIGNMENT) || '0'
+    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
+    const argumentVar = generator.valueToCode(block, 'var', Order.ASSIGNMENT) || '0'
     const ret = {
       task: 'folks-oracle@v1',
-      displayName: '',
+      displayName: `Fetch oracle price and store to ${argumentVar}`,
       inputs: {
         var: '',
         contract: '',
         token: ''
       }
     }
-    // Variable setter.
-    const argumentContract = generator.valueToCode(block, 'contract', Order.ASSIGNMENT) || '0'
-    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
-    const argumentVar = generator.valueToCode(block, 'var', Order.ASSIGNMENT) || '0'
     // const varName = generator.getVariableName(block.getFieldValue('var'))
 
     //const varName = '1';
@@ -203,19 +203,20 @@ tealScriptGenerator.forBlock['folks_oracle'] = (block, generator) => {
 // pay@v1
 tealScriptGenerator.forBlock['pay'] = (block, generator) => {
   try {
+    // Variable setter.
+    const argumentAmount = generator.valueToCode(block, 'amount', Order.ASSIGNMENT) || '0'
+    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
+    const argumentReceiver = generator.valueToCode(block, 'receiver', Order.ASSIGNMENT) || '0'
+
     const ret = {
       task: 'pay@v1',
-      displayName: '',
+      displayName: `Pay to ${argumentReceiver} ${argumentAmount} of token ${argumentToken}`,
       inputs: {
         receiver: '',
         amount: '',
         token: ''
       }
     }
-    // Variable setter.
-    const argumentAmount = generator.valueToCode(block, 'amount', Order.ASSIGNMENT) || '0'
-    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
-    const argumentReceiver = generator.valueToCode(block, 'receiver', Order.ASSIGNMENT) || '0'
     // const varName = generator.getVariableName(block.getFieldValue('var'))
 
     //const varName = '1';
@@ -229,4 +230,49 @@ tealScriptGenerator.forBlock['pay'] = (block, generator) => {
     return ''
   }
 }
+// pay@v1
+tealScriptGenerator.forBlock['sc_balance'] = (block, generator) => {
+  try {
+    // Variable setter.
+    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
+    const argumentVar = generator.valueToCode(block, 'var', Order.ASSIGNMENT) || '0'
+    // const varName = generator.getVariableName(block.getFieldValue('var'))
+
+    return JSON.stringify({
+      task: 'sc-balance@v1',
+      displayName: `Store escrow balance of token ${argumentToken} to variable ${argumentVar}`,
+      inputs: {
+        var: argumentVar,
+        token: argumentToken
+      }
+    }) + '\n'
+  } catch (e) {
+    console.error(e)
+    return ''
+  }
+}
+
+// assert@v1
+tealScriptGenerator.forBlock['assert'] = (block, generator) => {
+  try {
+    // Variable setter.
+    const conditionCode = generator.valueToCode(block, 'condition', Order.NONE) || 'false'
+    const argumentError = generator.valueToCode(block, 'error', Order.ASSIGNMENT) || '0'
+
+    return JSON.stringify({
+      task: 'assert@v1',
+      displayName: `Assert ${argumentError}`,
+      inputs: {
+        condition: conditionCode,
+        error: argumentError
+      }
+    }) + '\n'
+  } catch (e) {
+    console.error(e)
+    return ''
+  }
+}
+
+
+
 export { tealScriptGenerator }
