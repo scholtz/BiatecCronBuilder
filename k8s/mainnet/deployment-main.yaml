@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: biatec
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biatec-scheduler-main-deployment
+  namespace: biatec
+spec:
+  selector:
+    matchLabels:
+      app: biatec-scheduler-main
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: biatec-scheduler-main
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: biatec-scheduler-main
+          image: scholtz2/biatec-cron-builder:1.2024.04.14-main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 2
+            terminationGracePeriodSeconds: 1
+          volumeMounts:
+            - name: biatec-scheduler-main-conf
+              mountPath: /app/config.json
+              subPath: config.json
+      volumes:
+        - name: biatec-scheduler-main-conf
+          configMap:
+            name: biatec-scheduler-main-conf
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: biatec-scheduler-mainnet-service
+  namespace: biatec
+spec:
+  type: ClusterIP
+  selector:
+    app: biatec-scheduler-main
+  ports:
+    - name: http
+      protocol: TCP
+      appProtocol: http
+      port: 8080
+      targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: biatec-scheduler-main
+  namespace: biatec
+  annotations:
+    kubernetes.io/ingress.class: 'nginx'
+    nginx.ingress.kubernetes.io/backend-protocol: 'HTTP'
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  tls:
+    - hosts:
+        - scheduler.biatec.io
+        - www.scheduler.biatec.io
+      secretName: tls-scheduler.biatec.io
+  rules:
+    - host: scheduler.biatec.io
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: biatec-scheduler-mainnet-service
+                port:
+                  number: 8080
+    - host: www.scheduler.biatec.io
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: biatec-scheduler-mainnet-service
+                port:
+                  number: 8080

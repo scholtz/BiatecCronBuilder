@@ -1,0 +1,9 @@
+{
+    "bff": "https://api-scheduler.biatec.io",
+    "env": "mainnet-v1.0",
+    "envName": "Algorand Mainnet",
+    "algodHost": "https://mainnet-api.algonode.cloud",
+    "algodPort": 443,
+    "algodToken": ""
+  }
+  
