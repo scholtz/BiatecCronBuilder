@@ -1,4 +1,4 @@
-# Biatec Cron Builder
+# Biatec Cron Builder - Decentralized Scheduler
 
 This is the frontend repo for the decentralized algorand scheduler.
 
