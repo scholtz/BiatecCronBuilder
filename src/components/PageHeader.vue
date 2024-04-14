@@ -56,7 +56,7 @@ const makeMenu = () => {
     {
       label: 'Documentation',
       icon: 'pi pi-question',
-      url: 'https://www.vote-coin.com'
+      url: 'https://docs-scheduler.biatec.io/'
     },
     auth
   ].forEach((i) => menuItems.push(i))
