@@ -16,3 +16,8 @@ This work has been performed with support from the Algorand Foundation xGov Gran
 
 - Source code of the frontend smart contract blockly builder - https://github.com/scholtz/BiatecCronBuilder
 - Source code of the backend yaml 2 tealscript builder - https://github.com/scholtz/BiatecCron
+
+## Deployment
+
+- FE: https://scheduler.biatec.io
+- API: https://api-scheduler.biatec.io
