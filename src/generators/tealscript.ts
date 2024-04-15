@@ -238,14 +238,16 @@ tealScriptGenerator.forBlock['sc_balance'] = (block, generator) => {
     const argumentVar = generator.valueToCode(block, 'var', Order.ASSIGNMENT) || '0'
     // const varName = generator.getVariableName(block.getFieldValue('var'))
 
-    return JSON.stringify({
-      task: 'sc-balance@v1',
-      displayName: `Store escrow balance of token ${argumentToken} to variable ${argumentVar}`,
-      inputs: {
-        var: argumentVar,
-        token: argumentToken
-      }
-    }) + '\n'
+    return (
+      JSON.stringify({
+        task: 'sc-balance@v1',
+        displayName: `Store escrow balance of token ${argumentToken} to variable ${argumentVar}`,
+        inputs: {
+          var: argumentVar,
+          token: argumentToken
+        }
+      }) + '\n'
+    )
   } catch (e) {
     console.error(e)
     return ''
@@ -259,20 +261,47 @@ tealScriptGenerator.forBlock['assert'] = (block, generator) => {
     const conditionCode = generator.valueToCode(block, 'condition', Order.NONE) || 'false'
     const argumentError = generator.valueToCode(block, 'error', Order.ASSIGNMENT) || '0'
 
-    return JSON.stringify({
-      task: 'assert@v1',
-      displayName: `Assert ${argumentError}`,
-      inputs: {
-        condition: conditionCode,
-        error: argumentError
-      }
-    }) + '\n'
+    return (
+      JSON.stringify({
+        task: 'assert@v1',
+        displayName: `Assert ${argumentError}`,
+        inputs: {
+          condition: conditionCode,
+          error: argumentError
+        }
+      }) + '\n'
+    )
   } catch (e) {
     console.error(e)
     return ''
   }
 }
 
+// pact-swap@v1
+tealScriptGenerator.forBlock['pact_swap'] = (block, generator) => {
+  try {
+    // Variable setter.
+    const argumentContract = generator.valueToCode(block, 'contract', Order.ASSIGNMENT) || '0'
+    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
+    const argumentAmount = generator.valueToCode(block, 'amount', Order.ASSIGNMENT) || '0'
+    const argumentMinAssetB = generator.valueToCode(block, 'minAssetB', Order.ASSIGNMENT) || '0'
 
+    return (
+      JSON.stringify({
+        task: 'pact-swap@v1',
+        displayName: `Swap at pact pool ${argumentContract}`,
+        inputs: {
+          contract: argumentContract,
+          token: argumentToken,
+          amount: argumentAmount,
+          minAssetB: argumentMinAssetB
+        }
+      }) + '\n'
+    )
+  } catch (e) {
+    console.error(e)
+    return ''
+  }
+}
 
 export { tealScriptGenerator }

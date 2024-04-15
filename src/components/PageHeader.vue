@@ -59,7 +59,7 @@ const makeMenu = () => {
       url: 'https://docs-scheduler.biatec.io/'
     },
     {
-      label: 'Settings',
+      label: store.state.envName,
       icon: 'pi pi-cog',
       items: [
         {

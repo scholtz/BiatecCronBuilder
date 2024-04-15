@@ -6,6 +6,7 @@ import '../blocks/folks/oracle'
 import '../blocks/algorand/pay'
 import '../blocks/algorand/sc_balance'
 import '../blocks/algorand/assert'
+import '../blocks/pact/pact_swap'
 
 import ProgressSpinner from 'primevue/progressspinner'
 
@@ -63,11 +64,16 @@ const build = async () => {
   state.isBuilding = true
   try {
     GeneratorState.vars = {}
-    const buildInfo = await axios.post(`${await store.state.bff}/v1/build`, state.yamlCode, {
-      headers: {
-        'Content-Type': 'application/yaml'
+    const rebuild = state.tealScript ? '1' : '0'
+    const buildInfo = await axios.post(
+      `${await store.state.bff}/v1/build/${rebuild}`,
+      state.yamlCode,
+      {
+        headers: {
+          'Content-Type': 'application/yaml'
+        }
       }
-    })
+    )
     // Blockly.serialization.workspaces.load(state, myWorkspace);
     state.buildInfo = buildInfo.data
     state.files = Object.keys(buildInfo.data.files)
@@ -300,6 +306,9 @@ const copyLink = () => {
           <category name="Folks" colour="blue">
             <block type="folks_oracle"></block>
           </category>
+          <category name="Pact" colour="#7b5804">
+            <block type="pact_swap"></block>
+          </category>
         </BlocklyComponent>
       </div>
       <div class="col-12 md:col">
@@ -326,7 +335,8 @@ const copyLink = () => {
       <div class="col-12 md:col" v-if="state.yamlCode">
         <div>
           <Button
-            @click="build()"
+            @click="build"
+            :disabled="state.isBuilding"
             class="m-2"
             :severity="state.tealScript ? 'secondary' : 'primary'"
           >
