@@ -58,6 +58,22 @@ const makeMenu = () => {
       icon: 'pi pi-question',
       url: 'https://docs-scheduler.biatec.io/'
     },
+    {
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      items: [
+        {
+          label: 'Configuration',
+          icon: 'pi pi-cog',
+          route: '/settings'
+        },
+        {
+          label: 'Theme',
+          icon: 'pi pi-palette',
+          items: makeThemes()
+        }
+      ]
+    },
     auth
   ].forEach((i) => menuItems.push(i))
   items.value = menuItems

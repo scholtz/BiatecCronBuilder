@@ -3,7 +3,7 @@ import * as Blockly from 'blockly/core'
 Blockly.Blocks['assert'] = {
   init: function () {
     this.appendValueInput('condition').appendField('Assert condition:')
-    this.appendValueInput('error').setCheck('String').appendField('Error:')
+    this.appendValueInput('error').setCheck('String').appendField('Error text:')
 
     this.setColour('teal')
     this.setPreviousStatement(true, null)

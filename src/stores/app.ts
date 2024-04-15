@@ -96,3 +96,46 @@ export const useAppStore = defineStore('app', () => {
   )
   return { state }
 })
+
+export const resetConfiguration = () => {
+  localStorage.clear()
+  const app = useAppStore()
+  app.state = { ...defaultState }
+}
+
+
+export const useMainnet = () => {
+  const app = useAppStore()
+  app.state.algodHost = 'https://mainnet-api.algonode.cloud'
+  app.state.algodPort = 443
+  app.state.algodToken = ''
+  app.state.env = 'mainnet-v1.0'
+  app.state.authState = new AuthenticationStore()
+  //app.state.tokens = tokens
+}
+export const useTestnet = () => {
+  const app = useAppStore()
+  app.state.algodHost = 'https://testnet-api.algonode.cloud'
+  app.state.algodPort = 443
+  app.state.algodToken = ''
+  app.state.env = 'testnet-v1.0'
+  app.state.authState = new AuthenticationStore()
+}
+export const useVoitest = () => {
+  const app = useAppStore()
+  app.state.algodHost = 'https://voitest-api.k1-fi.a-wallet.net'
+  app.state.algodPort = 443
+  app.state.algodToken = ''
+  app.state.env = 'voitest-v1'
+  app.state.authState = new AuthenticationStore()
+}
+
+
+export const useSandnet = () => {
+  const app = useAppStore()
+  app.state.algodHost = 'http://localhost'
+  app.state.algodPort = 4001
+  app.state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  app.state.env = 'sandnet-v1'
+  //app.state.tokens = tokens
+}

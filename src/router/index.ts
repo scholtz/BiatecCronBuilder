@@ -8,7 +8,12 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: BuilderView
-    }
+    },
+    {
+      path: '/settings',
+      name: 'auth-settings',
+      component: () => import('../views/Settings/SettingsView.vue')
+    },
   ]
 })
 
