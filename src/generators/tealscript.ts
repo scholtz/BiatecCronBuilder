@@ -13,7 +13,12 @@ interface IGeneratorState {
 export const GeneratorState: IGeneratorState = {
   vars: {}
 }
-export const postProcessing = (code: string, period: number, start: number): string => {
+export const postProcessing = (
+  code: string,
+  period: number,
+  start: number,
+  fee: number
+): string => {
   let tasks = '['
   for (const line of code.split('\n')) {
     if (line.trim().startsWith('{')) {
@@ -27,7 +32,8 @@ export const postProcessing = (code: string, period: number, start: number): str
   const ret = {
     schedule: {
       period,
-      start
+      start,
+      fee
     },
     tasks: obj
   }

@@ -52,7 +52,8 @@ const showCode = () => {
   state.yamlCode = postProcessing(
     tealScriptGenerator.workspaceToCode(workspace.value.workspace),
     parseInt(state.period),
-    Math.round(new Date().getTime() / 1000)
+    Math.round(new Date().getTime() / 1000),
+    1000
   )
   const work = Blockly.serialization.workspaces.save(workspace.value.workspace)
   state.workspace = JSON.stringify(work)
@@ -211,7 +212,7 @@ const configure = async () => {
       {
         period: current.schedule.period,
         start: current.schedule.start,
-        fee: 1000
+        fee: current.schedule.fee
       }
     )
     const txs = txsRequest.data.map((t: string) => {
