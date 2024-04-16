@@ -41,7 +41,9 @@ const state = reactive({
   isSigningDeployTx: false,
   appId: 0,
   isSigningBootstrapTx: false,
-  isBootstrapDone: false
+  isBootstrapDone: false,
+  isDeploying: false,
+  isBootsraping: false
 })
 const store = useAppStore()
 
@@ -135,6 +137,7 @@ const goBackToDesigner = () => {
 
 const deploy = async () => {
   try {
+    state.isDeploying = true
     if (!store.state.authState.isAuthenticated) {
       toast.add({
         severity: 'info',
@@ -142,6 +145,7 @@ const deploy = async () => {
         life: 5000
       })
       store.state.forceAuth = true
+      state.isDeploying = false
       return
     }
 
@@ -174,10 +178,11 @@ const deploy = async () => {
     })
 
     console.log('sent', txInfo)
-
     console.log('deploy')
+    state.isDeploying = false
   } catch (e: any) {
     state.isSigningDeployTx = false
+    state.isDeploying = false
     console.error(e)
 
     toast.add({
@@ -199,6 +204,7 @@ const configure = async () => {
       store.state.forceAuth = true
       return
     }
+    state.isBootsraping = true
 
     const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
 
@@ -243,9 +249,11 @@ const configure = async () => {
     console.log('sent', txInfo)
     state.isBootstrapDone = true
 
+    state.isBootsraping = false
     console.log('deploy')
   } catch (e: any) {
     state.isSigningBootstrapTx = false
+    state.isBootsraping = false
     console.error(e)
 
     toast.add({
@@ -366,8 +374,13 @@ const copyLink = () => {
       </div>
       <div class="col-12 md:col" v-if="state.tealScript">
         <div>
-          <Button @click="deploy()" class="m-2" :severity="state.appId ? 'secondary' : 'primary'">
-            Step 4: Deploy
+          <Button
+            @click="deploy()"
+            class="m-2"
+            :severity="state.appId ? 'secondary' : 'primary'"
+            :disabled="state.isDeploying"
+          >
+            Step 4: Deploy to {{ store.state.envName }}
           </Button>
           <Message v-if="state.isSigningDeployTx" severity="info">
             Please check your wallet and sign deploy transaction
@@ -379,6 +392,7 @@ const copyLink = () => {
             @click="configure()"
             class="m-2"
             :severity="state.isBootstrapDone ? 'secondary' : 'primary'"
+            :disabled="state.isBootsraping"
           >
             Step 5: Configure
           </Button>
