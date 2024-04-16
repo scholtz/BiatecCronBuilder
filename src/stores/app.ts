@@ -103,13 +103,13 @@ export const resetConfiguration = () => {
   app.state = { ...defaultState }
 }
 
-
 export const useMainnet = () => {
   const app = useAppStore()
   app.state.algodHost = 'https://mainnet-api.algonode.cloud'
   app.state.algodPort = 443
   app.state.algodToken = ''
   app.state.env = 'mainnet-v1.0'
+  app.state.envName = 'Algorand Mainnet'
   app.state.authState = new AuthenticationStore()
   //app.state.tokens = tokens
 }
@@ -119,6 +119,7 @@ export const useTestnet = () => {
   app.state.algodPort = 443
   app.state.algodToken = ''
   app.state.env = 'testnet-v1.0'
+  app.state.envName = 'Algorand Testnet'
   app.state.authState = new AuthenticationStore()
 }
 export const useVoitest = () => {
@@ -128,8 +129,8 @@ export const useVoitest = () => {
   app.state.algodToken = ''
   app.state.env = 'voitest-v1'
   app.state.authState = new AuthenticationStore()
+  app.state.envName = 'VOI Test'
 }
-
 
 export const useSandnet = () => {
   const app = useAppStore()
@@ -137,5 +138,6 @@ export const useSandnet = () => {
   app.state.algodPort = 4001
   app.state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
   app.state.env = 'sandnet-v1'
+  app.state.envName = 'AVM Sandbox'
   //app.state.tokens = tokens
 }

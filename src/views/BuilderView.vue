@@ -208,7 +208,7 @@ const configure = async () => {
       throw Error('Start value is empty. Check your yaml configuration')
     }
     const txsRequest = await axios.post(
-      `${store.state.bff}/v1/tx/${state.buildInfo.hash}/${store.state.authState.account}/${state.appId}/bootstrap/${state.buildInfo.client}`,
+      `${store.state.bff}/v1/tx/${state.buildInfo.hash}/${store.state.env}/${store.state.authState.account}/${state.appId}/bootstrap/${state.buildInfo.client}`,
       {
         period: current.schedule.period,
         start: current.schedule.start,
