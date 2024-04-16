@@ -146,7 +146,7 @@ const deploy = async () => {
     }
 
     const txsRequest = await axios.get(
-      `${store.state.bff}/v1/tx-create/${state.buildInfo.hash}/${store.state.authState.account}/${state.buildInfo.client}`
+      `${store.state.bff}/v1/tx-create/${state.buildInfo.hash}/${store.state.env}/${store.state.authState.account}/${state.buildInfo.client}`
     )
     const txs = txsRequest.data.map((t: string) => {
       return Algosdk.decodeUnsignedTransaction(Buffer.from(t, 'base64')) as Algosdk.Transaction
