@@ -3,9 +3,10 @@ import * as Blockly from 'blockly/core'
 Blockly.Blocks['pact_swap'] = {
   init: function () {
     this.appendValueInput('contract').setCheck('Number').appendField('Execute SWAP at Pool Id:')
-    this.appendValueInput('token').setCheck('Number').appendField('Input asset Id:')
-    this.appendValueInput('amount').setCheck('Number').appendField('Input amount:')
-    this.appendValueInput('minAssetB').setCheck('Number').appendField('Minimum received:')
+    this.appendValueInput('sendToken').setCheck('Number').appendField('Send asset id:')
+    this.appendValueInput('sendAmount').setCheck('Number').appendField('Send amount:')
+    this.appendValueInput('receiveToken').setCheck('Number').appendField('Receive asset id:')
+    this.appendValueInput('receiveAmountMin').setCheck('Number').appendField('Minimum received:')
     this.appendDummyInput()
 
     this.setPreviousStatement(true, null)

@@ -290,9 +290,12 @@ tealScriptGenerator.forBlock['pact_swap'] = (block, generator) => {
   try {
     // Variable setter.
     const argumentContract = generator.valueToCode(block, 'contract', Order.ASSIGNMENT) || '0'
-    const argumentToken = generator.valueToCode(block, 'token', Order.ASSIGNMENT) || '0'
-    const argumentAmount = generator.valueToCode(block, 'amount', Order.ASSIGNMENT) || '0'
-    const argumentMinAssetB = generator.valueToCode(block, 'minAssetB', Order.ASSIGNMENT) || '0'
+    const argumentSendToken = generator.valueToCode(block, 'sendToken', Order.ASSIGNMENT) || '0'
+    const argumentSendAmount = generator.valueToCode(block, 'sendAmount', Order.ASSIGNMENT) || '0'
+    const argumentReceiveToken =
+      generator.valueToCode(block, 'receiveToken', Order.ASSIGNMENT) || '0'
+    const argumentReceiveAmountMin =
+      generator.valueToCode(block, 'receiveAmountMin', Order.ASSIGNMENT) || '0'
 
     return (
       JSON.stringify({
@@ -300,9 +303,10 @@ tealScriptGenerator.forBlock['pact_swap'] = (block, generator) => {
         displayName: `Swap at pact pool ${argumentContract}`,
         inputs: {
           contract: argumentContract,
-          token: argumentToken,
-          amount: argumentAmount,
-          minAssetB: argumentMinAssetB
+          sendToken: argumentSendToken,
+          sendAmount: argumentSendAmount,
+          receiveToken: argumentReceiveToken,
+          receiveAmountMin: argumentReceiveAmountMin
         }
       }) + '\n'
     )
