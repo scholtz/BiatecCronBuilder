@@ -400,7 +400,7 @@ const optin = async () => {
       algod
     )
     const asset = Number(state.optinAsset)
-    const transfer = await client.compose().assetTransfer(
+    const transfer = await client.assetTransfer(
       {
         assetAmount: 0,
         assetReceiver: algosdk.getApplicationAddress(state.appId),
