@@ -52,11 +52,6 @@ const state = reactive({
 const store = useAppStore()
 
 import { tealScriptGenerator, GeneratorState, postProcessing } from '../generators/tealscript'
-import {
-  SimulateRequest,
-  SimulateRequestTransactionGroup,
-  SimulateTraceConfig
-} from 'algosdk/dist/types/client/v2/algod/models/types'
 import algosdk from 'algosdk'
 
 const showCode = () => {
