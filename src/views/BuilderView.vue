@@ -14,11 +14,12 @@ import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import DropDown from 'primevue/dropdown'
 import Message from 'primevue/message'
+import InputNumber from 'primevue/inputnumber'
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import { useToast } from 'primevue/usetoast'
-import Algosdk from 'algosdk'
+import Algosdk, { Transaction } from 'algosdk'
 import { Buffer } from 'buffer'
 import YAML from 'yaml'
 import copy from 'copy-to-clipboard'
@@ -47,12 +48,15 @@ const state = reactive({
   isSigningBootstrapTx: false,
   isBootstrapDone: false,
   isDeploying: false,
-  isBootsraping: false
+  isBootsraping: false,
+  optinAsset: 0,
+  isOpting: false
 })
 const store = useAppStore()
 
 import { tealScriptGenerator, GeneratorState, postProcessing } from '../generators/tealscript'
 import algosdk from 'algosdk'
+import { BiatecCronJobClient } from '@/clients/BiatecCronJobClient'
 
 const showCode = () => {
   GeneratorState.vars = {}
@@ -91,6 +95,7 @@ const build = async () => {
     const current = YAML.parse(state.yamlCode)
     if (current?.schedule?.app) {
       state.appId = current.schedule.app
+      state.isBootstrapDone = true
     }
 
     state.isBuilding = false
@@ -361,6 +366,64 @@ watch(
   }
 )
 
+const optin = async () => {
+  try {
+    state.isDeploying = true
+    if (!store.state.authState.isAuthenticated) {
+      toast.add({
+        severity: 'info',
+        detail: 'Authenticate first please, and repeat the action',
+        life: 5000
+      })
+      store.state.forceAuth = true
+      state.isDeploying = false
+      return
+    }
+    const signer = {
+      addr: store.state.authState.account,
+      // eslint-disable-next-line no-unused-vars
+      signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
+        const groupedEncoded = txnGroup.map((tx: Algosdk.Transaction) => tx.toByte())
+        const signed = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+        return signed
+      }
+    }
+
+    state.isOpting = true
+    const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
+    var client = new BiatecCronJobClient(
+      {
+        id: state.appId,
+        resolveBy: 'id',
+        sender: signer
+      },
+      algod
+    )
+    const transfer = await client.assetTransfer({
+      assetAmount: 0,
+      assetReceiver: algosdk.getApplicationAddress(state.appId),
+      note: '',
+      xferAsset: Number(state.optinAsset)
+    })
+    console.log('transfer', transfer)
+    state.isOpting = false
+    toast.add({
+      severity: 'success',
+      detail: `Optin to asset ${state.optinAsset} is successful`,
+      life: 5000
+    })
+  } catch (e: any) {
+    state.isOpting = false
+    console.error(e)
+
+    toast.add({
+      severity: 'error',
+      detail: 'Error opting: ' + (e.message ?? e),
+      life: 5000
+    })
+  }
+}
+
 const copyLink = () => {
   const link = `${store.state.bff}${state.buildInfo.files[state.selectedFile]}`
   copy(link)
@@ -506,6 +569,15 @@ const copyLink = () => {
             Use address <AlgorandAddress :address="Algosdk.getApplicationAddress(state.appId)" /> to
             deposit funds for scheduled tasks and fees
           </p>
+        </div>
+        <div v-if="state.isBootstrapDone">
+          <InputNumber
+            v-model="state.optinAsset"
+            placeholder="Asset id to opt in with escrow account"
+          />
+          <Button @click="optin" class="m-2" severity="secondary" :disabled="state.isOpting">
+            Opt in to asset
+          </Button>
         </div>
       </div>
     </div>
