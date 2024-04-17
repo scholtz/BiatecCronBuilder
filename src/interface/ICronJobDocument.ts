@@ -5,6 +5,7 @@ export default interface ICronJobDocument {
     period: number
     start: number
     fee: number
+    app: number
   }
   tasks: ITask[]
 }

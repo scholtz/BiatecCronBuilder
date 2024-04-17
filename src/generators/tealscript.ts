@@ -17,7 +17,8 @@ export const postProcessing = (
   code: string,
   period: number,
   start: number,
-  fee: number
+  fee: number,
+  app: number
 ): string => {
   let tasks = '['
   for (const line of code.split('\n')) {
@@ -33,7 +34,8 @@ export const postProcessing = (
     schedule: {
       period,
       start,
-      fee
+      fee,
+      app
     },
     tasks: obj
   }

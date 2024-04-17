@@ -18,12 +18,16 @@ import { onMounted, reactive, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import { useToast } from 'primevue/usetoast'
-import Algosdk, { Algodv2 } from 'algosdk'
+import Algosdk from 'algosdk'
 import { Buffer } from 'buffer'
 import YAML from 'yaml'
 import copy from 'copy-to-clipboard'
 
 import AlgorandAddress from '@/components/AlgorandAddress.vue'
+
+import Algodv2 = algosdk.Algodv2
+import AtomicTransactionComposer = algosdk.AtomicTransactionComposer
+import modelsv2 = algosdk.modelsv2
 
 const toast = useToast()
 
@@ -48,6 +52,12 @@ const state = reactive({
 const store = useAppStore()
 
 import { tealScriptGenerator, GeneratorState, postProcessing } from '../generators/tealscript'
+import {
+  SimulateRequest,
+  SimulateRequestTransactionGroup,
+  SimulateTraceConfig
+} from 'algosdk/dist/types/client/v2/algod/models/types'
+import algosdk from 'algosdk'
 
 const showCode = () => {
   GeneratorState.vars = {}
@@ -55,7 +65,8 @@ const showCode = () => {
     tealScriptGenerator.workspaceToCode(workspace.value.workspace),
     parseInt(state.period),
     Math.round(new Date().getTime() / 1000),
-    1000
+    1000,
+    0
   )
   const work = Blockly.serialization.workspaces.save(workspace.value.workspace)
   state.workspace = JSON.stringify(work)
@@ -81,6 +92,11 @@ const build = async () => {
     state.buildInfo = buildInfo.data
     state.files = Object.keys(buildInfo.data.files)
     state.tealScript = JSON.stringify(buildInfo.data.files)
+
+    const current = YAML.parse(state.yamlCode)
+    if (current?.schedule?.app) {
+      state.appId = current.schedule.app
+    }
 
     state.isBuilding = false
   } catch (e) {
@@ -193,6 +209,63 @@ const deploy = async () => {
   }
 }
 
+const update = async () => {
+  try {
+    state.isDeploying = true
+    if (!store.state.authState.isAuthenticated) {
+      toast.add({
+        severity: 'info',
+        detail: 'Authenticate first please, and repeat the action',
+        life: 5000
+      })
+      store.state.forceAuth = true
+      state.isDeploying = false
+      return
+    }
+
+    const txsRequest = await axios.get(
+      `${store.state.bff}/v1/tx-update/${state.buildInfo.hash}/${store.state.env}/${state.appId}/${store.state.authState.account}/${state.buildInfo.client}`
+    )
+    const txs = txsRequest.data.map((t: string) => {
+      return Algosdk.decodeUnsignedTransaction(Buffer.from(t, 'base64')) as Algosdk.Transaction
+    })
+    console.log('txs', txs)
+    const groupedEncoded = txs.map((tx: Algosdk.Transaction) => tx.toByte())
+    state.isSigningDeployTx = true
+    const signed = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+    state.isSigningDeployTx = false
+    reloadStateFromLocalstorage()
+    console.log('signed', signed)
+    const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
+    const { txId } = await algod.sendRawTransaction(signed).do()
+    toast.add({
+      severity: 'success',
+      detail: `Tx ${txId} sent to the network`,
+      life: 5000
+    })
+    const txInfo = await Algosdk.waitForConfirmation(algod, txId, 10)
+    toast.add({
+      severity: 'success',
+      detail: `App ${state.appId} has been updated`,
+      life: 5000
+    })
+
+    console.log('sent', txInfo)
+    console.log('update done')
+    state.isDeploying = false
+  } catch (e: any) {
+    state.isSigningDeployTx = false
+    state.isDeploying = false
+    console.error(e)
+
+    toast.add({
+      severity: 'error',
+      detail: 'Error during update: ' + (e.message ?? e),
+      life: 5000
+    })
+  }
+}
+
 const configure = async () => {
   try {
     if (!store.state.authState.isAuthenticated) {
@@ -224,6 +297,7 @@ const configure = async () => {
     const txs = txsRequest.data.map((t: string) => {
       return Algosdk.decodeUnsignedTransaction(Buffer.from(t, 'base64')) as Algosdk.Transaction
     })
+
     console.log('txs', txs)
     const groupedEncoded = txs.map((tx: Algosdk.Transaction) => {
       return tx.toByte() as Uint8Array
@@ -235,9 +309,29 @@ const configure = async () => {
     state.isSigningBootstrapTx = false
     reloadStateFromLocalstorage()
     console.log('signed', signed)
-
     const simulate = await algod.simulateRawTransactions(signed).do()
     console.log('simulate', simulate)
+
+    const simulateRequest = new modelsv2.SimulateRequest({
+      allowEmptySignatures: true,
+      allowMoreLogging: true,
+      execTraceConfig: new modelsv2.SimulateTraceConfig({
+        enable: true,
+        scratchChange: true,
+        stackChange: true,
+        stateChange: true
+      }),
+      txnGroups: [
+        new modelsv2.SimulateRequestTransactionGroup({
+          txns: signed.map((txn) => algosdk.decodeObj(txn)) as algosdk.EncodedSignedTransaction[]
+        })
+      ]
+    })
+    const simulateResult: modelsv2.SimulateResponse = await algod
+      .simulateTransactions(simulateRequest)
+      .do()
+    console.log('simulateResult', simulateResult)
+
     const { txId } = await algod.sendRawTransaction(signed).do()
     toast.add({
       severity: 'success',
@@ -375,12 +469,23 @@ const copyLink = () => {
       <div class="col-12 md:col" v-if="state.tealScript">
         <div>
           <Button
+            v-if="!state.appId"
             @click="deploy()"
             class="m-2"
             :severity="state.appId ? 'secondary' : 'primary'"
             :disabled="state.isDeploying"
           >
             Step 4: Deploy to {{ store.state.envName }}
+          </Button>
+
+          <Button
+            v-if="state.appId"
+            @click="update()"
+            class="m-2"
+            :severity="state.appId ? 'secondary' : 'primary'"
+            :disabled="state.isDeploying"
+          >
+            Step 4: Update {{ state.appId }} to {{ store.state.envName }}
           </Button>
           <Message v-if="state.isSigningDeployTx" severity="info">
             Please check your wallet and sign deploy transaction
