@@ -399,12 +399,18 @@ const optin = async () => {
       },
       algod
     )
-    const transfer = await client.assetTransfer({
-      assetAmount: 0,
-      assetReceiver: algosdk.getApplicationAddress(state.appId),
-      note: '',
-      xferAsset: Number(state.optinAsset)
-    })
+    const asset = Number(state.optinAsset)
+    const transfer = await client.compose().assetTransfer(
+      {
+        assetAmount: 0,
+        assetReceiver: algosdk.getApplicationAddress(state.appId),
+        note: '',
+        xferAsset: asset
+      },
+      {
+        assets: [asset]
+      }
+    )
     console.log('transfer', transfer)
     state.isOpting = false
     toast.add({
