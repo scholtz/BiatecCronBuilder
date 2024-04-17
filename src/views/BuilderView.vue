@@ -23,6 +23,7 @@ import Algosdk, { Transaction } from 'algosdk'
 import { Buffer } from 'buffer'
 import YAML from 'yaml'
 import copy from 'copy-to-clipboard'
+import * as algokit from '@algorandfoundation/algokit-utils'
 
 import AlgorandAddress from '@/components/AlgorandAddress.vue'
 
@@ -408,6 +409,9 @@ const optin = async () => {
         xferAsset: asset
       },
       {
+        sendParams: {
+          fee: algokit.microAlgos(2000)
+        },
         assets: [asset]
       }
     )
