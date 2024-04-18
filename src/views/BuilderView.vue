@@ -26,10 +26,14 @@ import copy from 'copy-to-clipboard'
 import * as algokit from '@algorandfoundation/algokit-utils'
 
 import AlgorandAddress from '@/components/AlgorandAddress.vue'
+import { tealScriptGenerator, GeneratorState, postProcessing } from '../generators/tealscript'
+import algosdk from 'algosdk'
+import { BiatecCronJobShortHashClient } from '@/clients/BiatecCronJobClient'
 
 import Algodv2 = algosdk.Algodv2
 import AtomicTransactionComposer = algosdk.AtomicTransactionComposer
 import modelsv2 = algosdk.modelsv2
+import { BiatecTaskManagerClient } from '@/clients/BiatecTaskManagerClient'
 
 const toast = useToast()
 
@@ -51,13 +55,11 @@ const state = reactive({
   isDeploying: false,
   isBootsraping: false,
   optinAsset: 0,
-  isOpting: false
+  isOpting: false,
+  gasAmount: 0,
+  isFunding: false
 })
 const store = useAppStore()
-
-import { tealScriptGenerator, GeneratorState, postProcessing } from '../generators/tealscript'
-import algosdk from 'algosdk'
-import { BiatecCronJobClient } from '@/clients/BiatecCronJobClient'
 
 const showCode = () => {
   GeneratorState.vars = {}
@@ -159,7 +161,7 @@ const deploy = async () => {
       toast.add({
         severity: 'info',
         detail: 'Authenticate first please, and repeat the action',
-        life: 5000
+        life: 10000
       })
       store.state.forceAuth = true
       state.isDeploying = false
@@ -184,14 +186,14 @@ const deploy = async () => {
     toast.add({
       severity: 'success',
       detail: `Tx ${txId} sent to the network`,
-      life: 5000
+      life: 10000
     })
     const txInfo = await Algosdk.waitForConfirmation(algod, txId, 10)
     state.appId = txInfo['application-index']
     toast.add({
       severity: 'success',
       detail: `App ${state.appId} has been created`,
-      life: 5000
+      life: 10000
     })
 
     console.log('sent', txInfo)
@@ -205,7 +207,7 @@ const deploy = async () => {
     toast.add({
       severity: 'error',
       detail: 'Error during deploy: ' + (e.message ?? e),
-      life: 5000
+      life: 10000
     })
   }
 }
@@ -217,7 +219,7 @@ const update = async () => {
       toast.add({
         severity: 'info',
         detail: 'Authenticate first please, and repeat the action',
-        life: 5000
+        life: 10000
       })
       store.state.forceAuth = true
       state.isDeploying = false
@@ -242,13 +244,13 @@ const update = async () => {
     toast.add({
       severity: 'success',
       detail: `Tx ${txId} sent to the network`,
-      life: 5000
+      life: 10000
     })
     const txInfo = await Algosdk.waitForConfirmation(algod, txId, 10)
     toast.add({
       severity: 'success',
       detail: `App ${state.appId} has been updated`,
-      life: 5000
+      life: 10000
     })
 
     console.log('sent', txInfo)
@@ -262,7 +264,7 @@ const update = async () => {
     toast.add({
       severity: 'error',
       detail: 'Error during update: ' + (e.message ?? e),
-      life: 5000
+      life: 10000
     })
   }
 }
@@ -273,7 +275,7 @@ const configure = async () => {
       toast.add({
         severity: 'info',
         detail: 'Authenticate first please, and repeat the action',
-        life: 5000
+        life: 10000
       })
       store.state.forceAuth = true
       return
@@ -337,7 +339,7 @@ const configure = async () => {
     toast.add({
       severity: 'success',
       detail: `Tx ${txId} sent to the network`,
-      life: 5000
+      life: 10000
     })
     const txInfo = await Algosdk.waitForConfirmation(algod, txId, 10)
 
@@ -354,7 +356,7 @@ const configure = async () => {
     toast.add({
       severity: 'error',
       detail: 'Error during deploy: ' + (e.message ?? e),
-      life: 5000
+      life: 10000
     })
   }
 }
@@ -374,7 +376,7 @@ const optin = async () => {
       toast.add({
         severity: 'info',
         detail: 'Authenticate first please, and repeat the action',
-        life: 5000
+        life: 10000
       })
       store.state.forceAuth = true
       state.isDeploying = false
@@ -392,7 +394,7 @@ const optin = async () => {
 
     state.isOpting = true
     const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
-    var client = new BiatecCronJobClient(
+    var client = new BiatecCronJobShortHashClient(
       {
         id: state.appId,
         resolveBy: 'id',
@@ -419,8 +421,8 @@ const optin = async () => {
     state.isOpting = false
     toast.add({
       severity: 'success',
-      detail: `Optin to asset ${state.optinAsset} is successful`,
-      life: 5000
+      detail: `Optin ${state.appId} to asset ${state.optinAsset} is successful`,
+      life: 10000
     })
   } catch (e: any) {
     state.isOpting = false
@@ -429,7 +431,92 @@ const optin = async () => {
     toast.add({
       severity: 'error',
       detail: 'Error opting: ' + (e.message ?? e),
-      life: 5000
+      life: 10000
+    })
+  }
+}
+
+const fund = async () => {
+  try {
+    if (!store.state.authState.isAuthenticated) {
+      toast.add({
+        severity: 'info',
+        detail: 'Authenticate first please, and repeat the action',
+        life: 10000
+      })
+      store.state.forceAuth = true
+      return
+    }
+    state.isFunding = true
+    const signer = {
+      addr: store.state.authState.account,
+      // eslint-disable-next-line no-unused-vars
+      signer: async (txnGroup: Transaction[], indexesToSign: number[]) => {
+        const groupedEncoded = txnGroup.map((tx: Algosdk.Transaction) => tx.toByte())
+        const signed = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+        return signed
+      }
+    }
+
+    const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
+    const suggestedParams = await algod.getTransactionParams().do()
+    var client = new BiatecTaskManagerClient(
+      {
+        id: store.state.appTaskPoolId,
+        resolveBy: 'id',
+        sender: signer
+      },
+      algod
+    )
+    const global = await client.getGlobalState()
+    let deposit = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+      amount: state.gasAmount * 10 ** 6,
+      from: signer.addr,
+      suggestedParams,
+      to: algosdk.getApplicationAddress(store.state.appTaskPoolId)
+    })
+    if (global.fa && global.fa.asNumber() > 0) {
+      deposit = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+        amount: state.gasAmount * 10 ** 6,
+        from: signer.addr,
+        suggestedParams,
+        to: algosdk.getApplicationAddress(store.state.appTaskPoolId),
+        assetIndex: global.fa.asNumber()
+      })
+    }
+
+    const boxRef = {
+      // : algosdk.BoxReference
+      appIndex: store.state.appTaskPoolId,
+      name: algosdk.bigIntToBytes(state.appId, 8)
+    }
+    const transfer = await client.fundTask(
+      {
+        deposit: deposit,
+        taskAppId: state.appId
+      },
+      {
+        sendParams: {
+          fee: algokit.microAlgos(1000)
+        },
+        boxes: [boxRef]
+      }
+    )
+    console.log('transfer', transfer)
+    state.isFunding = false
+    toast.add({
+      severity: 'success',
+      detail: `Funding was successful`,
+      life: 10000
+    })
+  } catch (e: any) {
+    state.isFunding = false
+    console.error(e)
+
+    toast.add({
+      severity: 'error',
+      detail: 'Error funding: ' + (e.message ?? e),
+      life: 10000
     })
   }
 }
@@ -441,7 +528,7 @@ const copyLink = () => {
   toast.add({
     severity: 'info',
     detail: 'Link copied to clipboard: ' + link,
-    life: 5000
+    life: 10000
   })
 }
 </script>
@@ -583,10 +670,27 @@ const copyLink = () => {
         <div v-if="state.isBootstrapDone">
           <InputNumber
             v-model="state.optinAsset"
+            :min="0"
             placeholder="Asset id to opt in with escrow account"
           />
           <Button @click="optin" class="m-2" severity="secondary" :disabled="state.isOpting">
-            Opt in to asset
+            Opt {{ state.appId }} in to asset
+          </Button>
+        </div>
+        <div v-if="state.isBootstrapDone">
+          <p>
+            Executors are paid in <a href="https://www.asa.gold" target="_blank">ASA.Gold</a> token.
+            You must deposit the gold token to the task manager smart contract. If you are out of
+            gold gas, the executors will not execute your task.
+          </p>
+          <InputNumber
+            v-model="state.gasAmount"
+            :min="0"
+            :step="0.1"
+            placeholder="Amount of asa.gold to deposit"
+          />
+          <Button @click="fund" class="m-2" severity="primary" :disabled="state.isFunding">
+            Fund task for executors
           </Button>
         </div>
       </div>

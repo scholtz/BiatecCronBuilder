@@ -10,6 +10,8 @@ export interface IState {
 
   bff: string
 
+  appTaskPoolId: number
+
   algodHost: string
   algodPort: number
   algodToken: string
@@ -36,7 +38,7 @@ const defaultState: IState = {
   algodHost: 'http://localhost',
   algodPort: 4001,
   algodToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-
+  appTaskPoolId: 0,
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',
   theme: 'lara-dark-teal',
@@ -68,6 +70,23 @@ export const useAppStore = defineStore('app', () => {
   if (!lastTheme) lastTheme = 'lara-dark-teal'
   const initState = { ...defaultState }
 
+  try {
+    const stateFromStorage = localStorage.getItem('state')
+    if (stateFromStorage) {
+      const istate = JSON.parse(stateFromStorage) as IState
+      // if network has been changed make sure we do not load bad data from localstorage
+      if (istate.algodHost) initState.algodHost = istate.algodHost
+      if (istate.algodPort) initState.algodPort = istate.algodPort
+      if (istate.algodToken) initState.algodToken = istate.algodToken
+      if (istate.theme) initState.theme = istate.theme
+      if (istate.env) initState.env = istate.env
+      if (istate.envName) initState.envName = istate.envName
+      if (istate.appTaskPoolId) initState.appTaskPoolId = istate.appTaskPoolId
+    }
+  } catch (e: any) {
+    console.error(e)
+  }
+
   initState.theme = lastTheme
   console.log('initState.currentTheme:', initState.currentTheme, initState.theme)
   if (initState.currentTheme != initState.theme) {
@@ -84,6 +103,7 @@ export const useAppStore = defineStore('app', () => {
     async (newState, oldState) => {
       console.log('state update', oldState, newState)
       localStorage.setItem('state', JSON.stringify(newState))
+      localStorage.setItem('env', state.env)
 
       if (state.currentTheme != state.theme) {
         console.log(`setting theme from ${state.currentTheme} to ${state.theme}`)
@@ -97,11 +117,7 @@ export const useAppStore = defineStore('app', () => {
   return { state }
 })
 
-export const resetConfiguration = () => {
-  localStorage.clear()
-  const app = useAppStore()
-  app.state = { ...defaultState }
-}
+export const resetConfiguration = () => {}
 
 export const useMainnet = () => {
   const app = useAppStore()
@@ -110,6 +126,7 @@ export const useMainnet = () => {
   app.state.algodToken = ''
   app.state.env = 'mainnet-v1.0'
   app.state.envName = 'Algorand Mainnet'
+  app.state.appTaskPoolId = 0
   app.state.authState = new AuthenticationStore()
   //app.state.tokens = tokens
 }
@@ -120,6 +137,7 @@ export const useTestnet = () => {
   app.state.algodToken = ''
   app.state.env = 'testnet-v1.0'
   app.state.envName = 'Algorand Testnet'
+  app.state.appTaskPoolId = 643872805
   app.state.authState = new AuthenticationStore()
 }
 export const useVoitest = () => {
@@ -130,6 +148,7 @@ export const useVoitest = () => {
   app.state.env = 'voitest-v1'
   app.state.authState = new AuthenticationStore()
   app.state.envName = 'VOI Test'
+  app.state.appTaskPoolId = 0
 }
 
 export const useSandnet = () => {
@@ -140,4 +159,5 @@ export const useSandnet = () => {
   app.state.env = 'sandnet-v1'
   app.state.envName = 'AVM Sandbox'
   //app.state.tokens = tokens
+  app.state.appTaskPoolId = 1033
 }
