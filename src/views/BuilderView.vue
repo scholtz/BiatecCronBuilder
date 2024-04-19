@@ -17,7 +17,7 @@ import Message from 'primevue/message'
 import InputNumber from 'primevue/inputnumber'
 import { useConfirm } from 'primevue/useconfirm'
 import ConfirmDialog from 'primevue/confirmdialog'
-import { onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import PublicLayout from '@/layouts/PublicLayout.vue'
 import { useToast } from 'primevue/usetoast'
@@ -676,11 +676,27 @@ const copyLink = () => {
     life: 10000
   })
 }
+interface ITemplate {
+  id: string
+  name: string
+  data: string
+}
+interface IId2Template {
+  [key: string]: ITemplate[]
+}
+// a computed ref
+const currentTemplates = computed(() => {
+  if (!state.templates) return []
+  if (!store.state.env) return []
+  if (!(store.state.env in state.templates)) return []
+  const templates = state.templates as IId2Template
+  return templates[store.state.env]
+})
 
 const setTemplate = () => {
-  const template = state.templates[store.state.env].find((t) => t.id == state.currentTemplate)
+  const template = currentTemplates.value.find((t: ITemplate) => t.id == state.currentTemplate)
   console.log('template', template)
-  if (template.data) {
+  if (template && template.data) {
     const workObj = JSON.parse(template.data)
     console.log('restoring work', workObj)
     Blockly.serialization.workspaces.load(workObj, workspace.value.workspace)
@@ -696,7 +712,7 @@ const setTemplate = () => {
         <h2 class="m-2">Step 1: Start with a predefined template</h2>
         <div v-if="state.templates && store.state.env && store.state.env in state.templates">
           <DropDown
-            :options="state.templates[store.state.env]"
+            :options="currentTemplates"
             v-model="state.currentTemplate"
             option-label="name"
             option-value="id"
