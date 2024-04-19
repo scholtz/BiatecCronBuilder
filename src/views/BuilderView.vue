@@ -871,6 +871,7 @@ const setTemplate = () => {
             v-model="state.optinAsset"
             :min="0"
             placeholder="Asset id to opt in with escrow account"
+            class="m-2"
           />
           <Button @click="optin" class="m-2" severity="secondary" :disabled="state.isOpting">
             Opt {{ state.appId }} in to asset
@@ -893,6 +894,7 @@ const setTemplate = () => {
             :min="0"
             :step="0.1"
             placeholder="Amount of asa.gold to deposit"
+            class="m-2"
           />
           <Button @click="fund" class="m-2" severity="primary" :disabled="state.isFunding">
             Fund task for executors
