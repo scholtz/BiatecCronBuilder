@@ -129,7 +129,7 @@ export const useMainnet = () => {
   app.state.envName = 'Algorand Mainnet'
   app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
   app.state.authState = new AuthenticationStore()
-  //app.state.tokens = tokens
+  app.state.forceAuth = false
 }
 export const useTestnet = () => {
   const app = useAppStore()
@@ -140,6 +140,7 @@ export const useTestnet = () => {
   app.state.envName = 'Algorand Testnet'
   app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
   app.state.authState = new AuthenticationStore()
+  app.state.forceAuth = false
 }
 export const useVoitest = () => {
   const app = useAppStore()
@@ -150,6 +151,7 @@ export const useVoitest = () => {
   app.state.authState = new AuthenticationStore()
   app.state.envName = 'VOI Test'
   app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
+  app.state.forceAuth = false
 }
 
 export const useSandnet = () => {
@@ -161,4 +163,5 @@ export const useSandnet = () => {
   app.state.envName = 'AVM Sandbox'
   //app.state.tokens = tokens
   app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
+  app.state.forceAuth = false
 }

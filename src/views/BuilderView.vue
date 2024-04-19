@@ -36,6 +36,7 @@ import Algodv2 = algosdk.Algodv2
 import AtomicTransactionComposer = algosdk.AtomicTransactionComposer
 import modelsv2 = algosdk.modelsv2
 import { BiatecTaskManagerClient } from '@/clients/BiatecTaskManagerClient'
+import getPoolManagerApp from '@/scripts/scheduler/getPoolManagerApp'
 
 const toast = useToast()
 const confirm = useConfirm()
@@ -48,6 +49,7 @@ const state = reactive({
   files: [] as string[],
   isBuilding: false,
   period: '3600',
+  feeToken: 0,
   selectedFile: '',
   fileContent: '',
   buildInfo: {} as any,
@@ -192,8 +194,26 @@ const reloadStateFromLocalstorage = () => {
     console.error(e)
   }
 }
-onMounted(() => {
+
+const loadFeeToken = async () => {
+  const poolManagerApp = getPoolManagerApp(store.state.env)
+  const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
+  const app = await algod.getApplicationByID(poolManagerApp).do()
+  if (!app) {
+    console.error('failed to load fee token')
+    return
+  }
+  const key = app.params['global-state'].find((a: any) => a.key == 'ZmE=')
+  if (!key || !key.value) {
+    console.error('failed to load fee token')
+    return
+  }
+  state.feeToken = key.value.uint
+}
+
+onMounted(async () => {
   reloadStateFromLocalstorage()
+  await loadFeeToken()
 })
 
 const optionsSchedule = [
@@ -511,7 +531,12 @@ watch(
     }
   }
 )
-
+watch(
+  () => store.state.env,
+  async () => {
+    await loadFeeToken()
+  }
+)
 const optin = async () => {
   try {
     state.isDeploying = true
@@ -887,7 +912,8 @@ const setTemplate = () => {
           <p>
             Executors are paid in <a href="https://www.asa.gold" target="_blank">ASA.Gold</a> token.
             You must deposit the gold token to the task manager smart contract. If you are out of
-            gold gas, the executors will not execute your task.
+            gold gas, the executors will not execute your task. Fee token id for network
+            {{ store.state.env }} is {{ state.feeToken }}.
           </p>
           <InputNumber
             v-model="state.gasAmount"
