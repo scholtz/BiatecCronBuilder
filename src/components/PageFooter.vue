@@ -27,6 +27,12 @@ onBeforeUnmount(() => {
     <template #content>
       <div class="p-2">
         <div>
+          Join our discord channel to show us support, or if you need help -
+          <a href="https://discord.gg/B5kYTRz4Ng" target="_blank">Biatec discord</a>.
+        </div>
+      </div>
+      <div class="p-2">
+        <div>
           This work has been performed with support from the Algorand Foundation xGov Grants Program
           -
           <a

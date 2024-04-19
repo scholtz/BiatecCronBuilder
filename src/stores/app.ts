@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { usePrimeVue } from 'primevue/config'
 import axios from 'axios'
 import { AuthenticationStore } from 'algorand-authentication-component-vue'
+import getPoolManagerApp from '@/scripts/scheduler/getPoolManagerApp'
 
 export interface IState {
   env: string
@@ -38,7 +39,7 @@ const defaultState: IState = {
   algodHost: 'http://localhost',
   algodPort: 4001,
   algodToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-  appTaskPoolId: 0,
+  appTaskPoolId: getPoolManagerApp('mainnet-v1.0'),
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',
   theme: 'lara-dark-teal',
@@ -81,7 +82,7 @@ export const useAppStore = defineStore('app', () => {
       if (istate.theme) initState.theme = istate.theme
       if (istate.env) initState.env = istate.env
       if (istate.envName) initState.envName = istate.envName
-      if (istate.appTaskPoolId) initState.appTaskPoolId = istate.appTaskPoolId
+      if (istate.appTaskPoolId) initState.appTaskPoolId = getPoolManagerApp(initState.env)
     }
   } catch (e: any) {
     console.error(e)
@@ -126,7 +127,7 @@ export const useMainnet = () => {
   app.state.algodToken = ''
   app.state.env = 'mainnet-v1.0'
   app.state.envName = 'Algorand Mainnet'
-  app.state.appTaskPoolId = 0
+  app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
   app.state.authState = new AuthenticationStore()
   //app.state.tokens = tokens
 }
@@ -137,7 +138,7 @@ export const useTestnet = () => {
   app.state.algodToken = ''
   app.state.env = 'testnet-v1.0'
   app.state.envName = 'Algorand Testnet'
-  app.state.appTaskPoolId = 643872805
+  app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
   app.state.authState = new AuthenticationStore()
 }
 export const useVoitest = () => {
@@ -148,7 +149,7 @@ export const useVoitest = () => {
   app.state.env = 'voitest-v1'
   app.state.authState = new AuthenticationStore()
   app.state.envName = 'VOI Test'
-  app.state.appTaskPoolId = 0
+  app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
 }
 
 export const useSandnet = () => {
@@ -159,5 +160,5 @@ export const useSandnet = () => {
   app.state.env = 'sandnet-v1'
   app.state.envName = 'AVM Sandbox'
   //app.state.tokens = tokens
-  app.state.appTaskPoolId = 1033
+  app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
 }

@@ -15,6 +15,8 @@ import Button from 'primevue/button'
 import DropDown from 'primevue/dropdown'
 import Message from 'primevue/message'
 import InputNumber from 'primevue/inputnumber'
+import { useConfirm } from 'primevue/useconfirm'
+import ConfirmDialog from 'primevue/confirmdialog'
 import { onMounted, reactive, ref, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import PublicLayout from '@/layouts/PublicLayout.vue'
@@ -36,6 +38,7 @@ import modelsv2 = algosdk.modelsv2
 import { BiatecTaskManagerClient } from '@/clients/BiatecTaskManagerClient'
 
 const toast = useToast()
+const confirm = useConfirm()
 
 const workspace = ref()
 const state = reactive({
@@ -57,7 +60,65 @@ const state = reactive({
   optinAsset: 0,
   isOpting: false,
   gasAmount: 0,
-  isFunding: false
+  isFunding: false,
+  isDeleting: false,
+  currentTemplate: 'periodic',
+  isConfirmDeleteVisible: false,
+  templates: {
+    'mainnet-v1.0': [
+      {
+        id: 'periodic',
+        name: 'Periodic payment to another account',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"pay","id":"{[GaAJT8dWJ{an%l:4Q{","x":140,"y":76,"inputs":{"receiver":{"block":{"type":"text","id":"Q3#PA43z++/%-VvY(7Ga","fields":{"TEXT":"ALGONAUTSPIUHDCX3SLFXOFDUKOE4VY36XV4JX2JHQTWJNKVBKPEBQACRY"}}},"token":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":0}}},"amount":{"block":{"type":"math_number","id":"Mp@f{Z[6Oe}O%?;.Jl0W","fields":{"NUM":1000000}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"}]}'
+      },
+      {
+        id: 'dca',
+        name: 'DCA',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"pact_swap","id":"sy8,1IjQjpJxN}I)^/7!","x":81,"y":57,"inputs":{"contract":{"block":{"type":"math_number","id":"EPY3RMQ-(nJJ[Yn0oipd","fields":{"NUM":1075389128}}},"sendToken":{"block":{"type":"math_number","id":"BW?tdzDSqV.F5#l^d4{O","fields":{"NUM":0}}},"sendAmount":{"block":{"type":"math_number","id":"pv4?cQB4t@)~PRvQW7Jt","fields":{"NUM":1000000}}},"receiveToken":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":452399768}}},"receiveAmountMin":{"block":{"type":"math_number","id":"M^GX;19;NqM*2jv+Bll?","fields":{"NUM":100000}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"}]}'
+      },
+      {
+        id: 'swapsend',
+        name: 'Swap and send',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"variables_set","id":"^g8a-Xx7:Mo/f7eu@3pa","x":334,"y":38,"fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}},"inputs":{"VALUE":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":1241945177}}}},"next":{"block":{"type":"pact_swap","id":"sy8,1IjQjpJxN}I)^/7!","inputs":{"contract":{"block":{"type":"math_number","id":"EPY3RMQ-(nJJ[Yn0oipd","fields":{"NUM":1243421154}}},"sendToken":{"block":{"type":"math_number","id":"BW?tdzDSqV.F5#l^d4{O","fields":{"NUM":31566704}}},"sendAmount":{"block":{"type":"math_number","id":"pv4?cQB4t@)~PRvQW7Jt","fields":{"NUM":1000000}}},"receiveToken":{"block":{"type":"variables_get","id":"=Pqgm8-4vA:(oD:`^r#H","fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}}}},"receiveAmountMin":{"block":{"type":"math_number","id":"M^GX;19;NqM*2jv+Bll?","fields":{"NUM":1000000}}}},"next":{"block":{"type":"sc_balance","id":"B4GvXa#w~?{b6_Kv](fR","inputs":{"token":{"block":{"type":"variables_get","id":"7k_DSe_s%SlmkH`uWL!-","fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}}}},"var":{"block":{"type":"variables_get","id":"m/.beQbNMcBfxAQ.bYr=","fields":{"VAR":{"id":"w+5n|;Y_49BJ13F9=DHD"}}}}},"next":{"block":{"type":"pay","id":"{[GaAJT8dWJ{an%l:4Q{","inputs":{"receiver":{"block":{"type":"text","id":"Q3#PA43z++/%-VvY(7Ga","fields":{"TEXT":"ALGONAUTSPIUHDCX3SLFXOFDUKOE4VY36XV4JX2JHQTWJNKVBKPEBQACRY"}}},"token":{"block":{"type":"variables_get","id":";]o+2c:8x3:(=Z9NMx/w","fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}}}},"amount":{"block":{"type":"variables_get","id":"pi_xlN^bX*1AYv3x+YW8","fields":{"VAR":{"id":"w+5n|;Y_49BJ13F9=DHD"}}}}}}}}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"}]}'
+      },
+      {
+        id: 'oracleswap',
+        name: 'Swap if oracle price is above',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"folks_oracle","id":"CHjx0oOHQUIq-r(uK^?,","x":176,"y":57,"inputs":{"contract":{"block":{"type":"math_number","id":"!{ZqyVgv:,R!9W#0j0Z$","fields":{"NUM":1040271396}}},"token":{"block":{"type":"math_number","id":"AsYu_4*yvHu=PIsgL:O.","fields":{"NUM":0}}},"var":{"block":{"type":"variables_get","id":"[7|-dP_~aSad!w8{p`@s","fields":{"VAR":{"id":"GP5HStL]-{xb)S52MqeV"}}}}},"next":{"block":{"type":"folks_oracle","id":"S.xoeyP~.V1u%Gk2^S*s","inputs":{"contract":{"block":{"type":"math_number","id":"BxFjX5AHEuYEah6%Yi(o","fields":{"NUM":1040271396}}},"token":{"block":{"type":"math_number","id":"b56eV=$7Jv4[n.?(4vF+","fields":{"NUM":246516580}}},"var":{"block":{"type":"variables_get","id":"Mm*S:@a]m,C0NqqyvyBn","fields":{"VAR":{"id":"j(f!{NqK5!=iby0Z1lFY"}}}}},"next":{"block":{"type":"assert","id":"Sj3R,?O)E]Ts))1S8^X@","inputs":{"condition":{"block":{"type":"logic_compare","id":"k#zX:iwQS6QrKDLU_De8","fields":{"OP":"LT"},"inputs":{"A":{"block":{"type":"variables_get","id":"Z3bCvQI[!`L#~SA$cb)[","fields":{"VAR":{"id":"j(f!{NqK5!=iby0Z1lFY"}}}},"B":{"block":{"type":"math_number","id":"[qn6G(OkmYToq=;O-j+K","fields":{"NUM":8000000000}}}}}},"error":{"block":{"type":"text","id":"S#kOOlV|Ks5IOs*GUKnC","fields":{"TEXT":"Gold price must be below 80 usd"}}}},"next":{"block":{"type":"variables_set","id":"a;QADXn5dET7Q|3l6$~Q","fields":{"VAR":{"id":"Djm4(/;d^;T:fX3xz3{s"}},"inputs":{"VALUE":{"block":{"type":"math_arithmetic","id":"~R8pB]QeF-ku8k56N#%o","fields":{"OP":"DIVIDE"},"inputs":{"A":{"block":{"type":"math_arithmetic","id":"St+Y4brd!96ts5-I:Jco","fields":{"OP":"MULTIPLY"},"inputs":{"A":{"block":{"type":"variables_get","id":"`]VYAV=w-YFFQRmzOhyW","fields":{"VAR":{"id":"j(f!{NqK5!=iby0Z1lFY"}}}},"B":{"block":{"type":"math_number","id":"j2Xs{8ug6}GiWrin*:8{","fields":{"NUM":100000}}}}}},"B":{"block":{"type":"variables_get","id":"~2,pA#oRFXk3`Hy}yoU[","fields":{"VAR":{"id":"GP5HStL]-{xb)S52MqeV"}}}}}}}},"next":{"block":{"type":"pact_swap","id":"aF?j@;;*pV7sqUfMvPW!","inputs":{"contract":{"block":{"type":"math_number","id":".4U:GgFh%A0ge4);ZD(0","fields":{"NUM":1244947358}}},"sendToken":{"block":{"type":"math_number","id":"Xcm/pVQc_6_[!.n{os(A","fields":{"NUM":0}}},"sendAmount":{"block":{"type":"variables_get","id":"OL;eabC4_c4-f0fY/|,0","fields":{"VAR":{"id":"Djm4(/;d^;T:fX3xz3{s"}}}},"receiveToken":{"block":{"type":"math_number","id":"K.=|BkkUD@VZ@A_XGB$e","fields":{"NUM":1241944285}}},"receiveAmountMin":{"block":{"type":"math_number","id":"p{.Qp-8`U_L3dEMy~_)9","fields":{"NUM":100000}}}}}}}}}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"},{"name":"goldprice","id":"j(f!{NqK5!=iby0Z1lFY"},{"name":"algoprice","id":"GP5HStL]-{xb)S52MqeV"},{"name":"goldPriceInAlgo","id":"Djm4(/;d^;T:fX3xz3{s"}]}'
+      }
+    ],
+    'testnet-v1.0': [
+      {
+        id: 'periodic',
+        name: 'Periodic payment to another account',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"pay","id":"{[GaAJT8dWJ{an%l:4Q{","x":140,"y":76,"inputs":{"receiver":{"block":{"type":"text","id":"Q3#PA43z++/%-VvY(7Ga","fields":{"TEXT":"ALGONAUTSPIUHDCX3SLFXOFDUKOE4VY36XV4JX2JHQTWJNKVBKPEBQACRY"}}},"token":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":0}}},"amount":{"block":{"type":"math_number","id":"Mp@f{Z[6Oe}O%?;.Jl0W","fields":{"NUM":1000000}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"}]}'
+      },
+      {
+        id: 'dca',
+        name: 'DCA',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"pact_swap","id":"sy8,1IjQjpJxN}I)^/7!","x":81,"y":57,"inputs":{"contract":{"block":{"type":"math_number","id":"EPY3RMQ-(nJJ[Yn0oipd","fields":{"NUM":88280437}}},"sendToken":{"block":{"type":"math_number","id":"BW?tdzDSqV.F5#l^d4{O","fields":{"NUM":0}}},"sendAmount":{"block":{"type":"math_number","id":"pv4?cQB4t@)~PRvQW7Jt","fields":{"NUM":10000000}}},"receiveToken":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":48806985}}},"receiveAmountMin":{"block":{"type":"math_number","id":"M^GX;19;NqM*2jv+Bll?","fields":{"NUM":1000}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"}]}'
+      },
+      {
+        id: 'swapsend',
+        name: 'Swap and send',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"variables_set","id":"^g8a-Xx7:Mo/f7eu@3pa","x":488,"y":36,"fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}},"inputs":{"VALUE":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":48806985}}}},"next":{"block":{"type":"pact_swap","id":"sy8,1IjQjpJxN}I)^/7!","inputs":{"contract":{"block":{"type":"math_number","id":"EPY3RMQ-(nJJ[Yn0oipd","fields":{"NUM":88280437}}},"sendToken":{"block":{"type":"math_number","id":"BW?tdzDSqV.F5#l^d4{O","fields":{"NUM":0}}},"sendAmount":{"block":{"type":"math_number","id":"pv4?cQB4t@)~PRvQW7Jt","fields":{"NUM":10000000}}},"receiveToken":{"block":{"type":"variables_get","id":"=Pqgm8-4vA:(oD:`^r#H","fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}}}},"receiveAmountMin":{"block":{"type":"math_number","id":"M^GX;19;NqM*2jv+Bll?","fields":{"NUM":1000}}}},"next":{"block":{"type":"sc_balance","id":"B4GvXa#w~?{b6_Kv](fR","inputs":{"token":{"block":{"type":"variables_get","id":"7k_DSe_s%SlmkH`uWL!-","fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}}}},"var":{"block":{"type":"variables_get","id":"m/.beQbNMcBfxAQ.bYr=","fields":{"VAR":{"id":"w+5n|;Y_49BJ13F9=DHD"}}}}},"next":{"block":{"type":"pay","id":"{[GaAJT8dWJ{an%l:4Q{","inputs":{"receiver":{"block":{"type":"text","id":"Q3#PA43z++/%-VvY(7Ga","fields":{"TEXT":"ALGONAUTSPIUHDCX3SLFXOFDUKOE4VY36XV4JX2JHQTWJNKVBKPEBQACRY"}}},"token":{"block":{"type":"variables_get","id":";]o+2c:8x3:(=Z9NMx/w","fields":{"VAR":{"id":"x,h.A=bjs[xLs=Losh6l"}}}},"amount":{"block":{"type":"variables_get","id":"pi_xlN^bX*1AYv3x+YW8","fields":{"VAR":{"id":"w+5n|;Y_49BJ13F9=DHD"}}}}}}}}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"}]}'
+      }
+    ],
+    'voitest-v1.0': [
+      {
+        id: 'periodic',
+        name: 'Periodic payment to another account',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"pay","id":"{[GaAJT8dWJ{an%l:4Q{","x":140,"y":76,"inputs":{"receiver":{"block":{"type":"text","id":"Q3#PA43z++/%-VvY(7Ga","fields":{"TEXT":"ALGONAUTSPIUHDCX3SLFXOFDUKOE4VY36XV4JX2JHQTWJNKVBKPEBQACRY"}}},"token":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":0}}},"amount":{"block":{"type":"math_number","id":"Mp@f{Z[6Oe}O%?;.Jl0W","fields":{"NUM":1000000}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"}]}'
+      }
+    ],
+    'sandnet-v1': [
+      {
+        id: 'periodic',
+        name: 'Periodic payment to another account',
+        data: '{"blocks":{"languageVersion":0,"blocks":[{"type":"pay","id":"{[GaAJT8dWJ{an%l:4Q{","x":140,"y":76,"inputs":{"receiver":{"block":{"type":"text","id":"Q3#PA43z++/%-VvY(7Ga","fields":{"TEXT":"ALGONAUTSPIUHDCX3SLFXOFDUKOE4VY36XV4JX2JHQTWJNKVBKPEBQACRY"}}},"token":{"block":{"type":"math_number","id":"vasyr]%m~n)m$_p:%Lz{","fields":{"NUM":0}}},"amount":{"block":{"type":"math_number","id":"Mp@f{Z[6Oe}O%?;.Jl0W","fields":{"NUM":1000000}}}}}]},"variables":[{"name":"amount","id":"w+5n|;Y_49BJ13F9=DHD"},{"name":"asset","id":"x,h.A=bjs[xLs=Losh6l"}]}'
+      }
+    ]
+  }
 })
 const store = useAppStore()
 
@@ -101,9 +162,20 @@ const build = async () => {
       state.isBootstrapDone = true
     }
 
+    toast.add({
+      severity: 'success',
+      detail: `App has been built`,
+      life: 10000
+    })
+
     state.isBuilding = false
-  } catch (e) {
+  } catch (e: any) {
     state.isBuilding = false
+    toast.add({
+      severity: 'error',
+      detail: `Error while building: ${e.message ?? e}`,
+      life: 10000
+    })
   }
 }
 const reloadStateFromLocalstorage = () => {
@@ -268,7 +340,78 @@ const update = async () => {
     })
   }
 }
+const toConfirmDeleteTask = () => {
+  confirm.require({
+    message: 'Are you sure you want to delete the app?',
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    accept: async () => {
+      toast.add({ severity: 'info', summary: 'Confirmed', detail: 'You have accepted', life: 3000 })
+      await deleteTask()
+    },
+    reject: () => {
+      toast.add({ severity: 'error', summary: 'Rejected', detail: 'You have rejected', life: 3000 })
+    }
+  })
+}
+const deleteTask = async () => {
+  try {
+    if (!store.state.authState.isAuthenticated) {
+      toast.add({
+        severity: 'info',
+        detail: 'Authenticate first please, and repeat the action',
+        life: 10000
+      })
+      return
+    }
 
+    state.isDeleting = true
+
+    const txsRequest = await axios.get(
+      `${store.state.bff}/v1/tx-delete/${state.buildInfo.hash}/${store.state.env}/${state.appId}/${store.state.authState.account}/${state.buildInfo.client}`
+    )
+    const txs = txsRequest.data.map((t: string) => {
+      return Algosdk.decodeUnsignedTransaction(Buffer.from(t, 'base64')) as Algosdk.Transaction
+    })
+    console.log('txs', txs)
+    const groupedEncoded = txs.map((tx: Algosdk.Transaction) => tx.toByte())
+    state.isSigningDeployTx = true
+    const signed = (await store.state.authComponent.sign(groupedEncoded)) as Uint8Array[]
+    state.isSigningDeployTx = false
+    reloadStateFromLocalstorage()
+    console.log('signed', signed)
+    const algod = new Algodv2(store.state.algodToken, store.state.algodHost, store.state.algodPort)
+    const { txId } = await algod.sendRawTransaction(signed).do()
+    toast.add({
+      severity: 'success',
+      detail: `Tx ${txId} sent to the network`,
+      life: 10000
+    })
+    const txInfo = await Algosdk.waitForConfirmation(algod, txId, 10)
+    toast.add({
+      severity: 'success',
+      detail: `App ${state.appId} has been deleted`,
+      life: 10000
+    })
+
+    console.log('sent', txInfo)
+    console.log('delete done')
+    state.isDeleting = false
+  } catch (e: any) {
+    state.isSigningDeployTx = false
+    state.isDeleting = false
+    console.error(e)
+
+    toast.add({
+      severity: 'error',
+      detail: 'Error during update: ' + (e.message ?? e),
+      life: 10000
+    })
+  }
+}
 const configure = async () => {
   try {
     if (!store.state.authState.isAuthenticated) {
@@ -434,6 +577,7 @@ const optin = async () => {
       life: 10000
     })
   }
+  reloadStateFromLocalstorage()
 }
 
 const fund = async () => {
@@ -519,6 +663,7 @@ const fund = async () => {
       life: 10000
     })
   }
+  reloadStateFromLocalstorage()
 }
 
 const copyLink = () => {
@@ -531,13 +676,39 @@ const copyLink = () => {
     life: 10000
   })
 }
+
+const setTemplate = () => {
+  const template = state.templates[store.state.env].find((t) => t.id == state.currentTemplate)
+  console.log('template', template)
+  if (template.data) {
+    const workObj = JSON.parse(template.data)
+    console.log('restoring work', workObj)
+    Blockly.serialization.workspaces.load(workObj, workspace.value.workspace)
+  }
+}
 </script>
 
 <template>
   <PublicLayout>
+    <ConfirmDialog />
     <div class="grid m-1" v-if="!state.selectedFile">
       <div class="col-12">
-        <h2 class="m-2">Step 1: Setup your scheduler</h2>
+        <h2 class="m-2">Step 1: Start with a predefined template</h2>
+        <div v-if="state.templates && store.state.env && store.state.env in state.templates">
+          <DropDown
+            :options="state.templates[store.state.env]"
+            v-model="state.currentTemplate"
+            option-label="name"
+            option-value="id"
+            placeholder="Select template"
+            class="m-1"
+          ></DropDown>
+          <Button class="m-1" @click="setTemplate">Set</Button>
+        </div>
+        <div v-else>There are no templates for selected network</div>
+      </div>
+      <div class="col-12">
+        <h2 class="m-2">Step 2: Setup your scheduler</h2>
         <BlocklyComponent ref="workspace" class="m-2">
           <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}"> </category>
           <category name="Math" colour="%{BKY_MATH_HUE}">
@@ -583,7 +754,7 @@ const copyLink = () => {
             @click="showCode()"
             class="m-2"
             :severity="state.yamlCode ? 'secondary' : 'primary'"
-            >Step 2: Generate biatec scheduler code
+            >Step 3: Generate biatec scheduler code
           </Button>
         </div>
         <div v-if="state.yamlCode">
@@ -598,15 +769,14 @@ const copyLink = () => {
             class="m-2"
             :severity="state.tealScript ? 'secondary' : 'primary'"
           >
-            Step 3: Build smart contract
-
-            <ProgressSpinner
-              v-if="state.isBuilding"
-              style="width: 1em; height: 1em"
-              strokeWidth="5"
-              class="m-2"
-            />
+            Step 4: Build smart contract
           </Button>
+          <ProgressSpinner
+            v-if="state.isBuilding"
+            style="width: 2em; height: 2em"
+            strokeWidth="10"
+            class="m-2"
+          />
         </div>
         <div v-if="state.tealScript">
           <div v-for="(item, index) in state.files" :key="index">
@@ -630,9 +800,8 @@ const copyLink = () => {
             :severity="state.appId ? 'secondary' : 'primary'"
             :disabled="state.isDeploying"
           >
-            Step 4: Deploy to {{ store.state.envName }}
+            Step 5: Deploy to {{ store.state.envName }}
           </Button>
-
           <Button
             v-if="state.appId"
             @click="update()"
@@ -640,8 +809,15 @@ const copyLink = () => {
             :severity="state.appId ? 'secondary' : 'primary'"
             :disabled="state.isDeploying"
           >
-            Step 4: Update {{ state.appId }} to {{ store.state.envName }}
+            Step 5: Update {{ state.appId }} to {{ store.state.envName }}
           </Button>
+          <ProgressSpinner
+            v-if="state.isDeploying"
+            style="width: 2em; height: 2em"
+            strokeWidth="10"
+            class="m-2"
+          />
+
           <Message v-if="state.isSigningDeployTx" severity="info">
             Please check your wallet and sign deploy transaction
           </Message>
@@ -654,8 +830,15 @@ const copyLink = () => {
             :severity="state.isBootstrapDone ? 'secondary' : 'primary'"
             :disabled="state.isBootsraping"
           >
-            Step 5: Configure
+            Step 6: Configure
           </Button>
+          <ProgressSpinner
+            v-if="state.isBootsraping"
+            style="width: 2em; height: 2em"
+            strokeWidth="10"
+            class="m-2"
+          />
+
           <Message v-if="state.isSigningBootstrapTx" severity="info">
             Please check your wallet and sign deploy transaction
           </Message>
@@ -676,6 +859,12 @@ const copyLink = () => {
           <Button @click="optin" class="m-2" severity="secondary" :disabled="state.isOpting">
             Opt {{ state.appId }} in to asset
           </Button>
+          <ProgressSpinner
+            v-if="state.isOpting"
+            style="width: 2em; height: 2em"
+            strokeWidth="10"
+            class="m-2"
+          />
         </div>
         <div v-if="state.isBootstrapDone">
           <p>
@@ -692,6 +881,28 @@ const copyLink = () => {
           <Button @click="fund" class="m-2" severity="primary" :disabled="state.isFunding">
             Fund task for executors
           </Button>
+          <ProgressSpinner
+            v-if="state.isFunding"
+            style="width: 2em; height: 2em"
+            strokeWidth="10"
+            class="m-2"
+          />
+        </div>
+        <div v-if="state.isBootstrapDone">
+          <Button
+            @click="toConfirmDeleteTask"
+            class="m-2"
+            severity="danger"
+            :disabled="state.isDeleting"
+          >
+            Delete task
+          </Button>
+          <ProgressSpinner
+            v-if="state.isDeleting"
+            style="width: 2em; height: 2em"
+            strokeWidth="10"
+            class="m-2"
+          />
         </div>
       </div>
     </div>
