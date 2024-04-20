@@ -37,7 +37,7 @@ import AtomicTransactionComposer = algosdk.AtomicTransactionComposer
 import modelsv2 = algosdk.modelsv2
 import { BiatecTaskManagerClient } from '@/clients/BiatecTaskManagerClient'
 import getPoolManagerApp from '@/scripts/scheduler/getPoolManagerApp'
-
+import getBoxReferenceApp from '@/scripts/scheduler/getBoxReferenceApp'
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -654,11 +654,7 @@ const fund = async () => {
       })
     }
 
-    const boxRef = {
-      // : algosdk.BoxReference
-      appIndex: store.state.appTaskPoolId,
-      name: algosdk.bigIntToBytes(state.appId, 8)
-    }
+    const boxRef = getBoxReferenceApp(store.state.appTaskPoolId, state.appId)
     const transfer = await client.fundTask(
       {
         deposit: deposit,
@@ -888,7 +884,7 @@ const setTemplate = () => {
           <Message severity="info"> Contract is deployed </Message>
           <p>
             Use address <AlgorandAddress :address="Algosdk.getApplicationAddress(state.appId)" /> to
-            deposit funds for scheduled tasks and fees
+            deposit funds for scheduled task.
           </p>
         </div>
         <div v-if="state.isBootstrapDone">
@@ -899,7 +895,7 @@ const setTemplate = () => {
             class="m-2"
           />
           <Button @click="optin" class="m-2" severity="secondary" :disabled="state.isOpting">
-            Opt {{ state.appId }} in to asset
+            Opt task {{ state.appId }} in to asset
           </Button>
           <ProgressSpinner
             v-if="state.isOpting"

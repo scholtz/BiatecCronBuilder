@@ -16,6 +16,7 @@ export interface IState {
   algodHost: string
   algodPort: number
   algodToken: string
+  explorer: string
 
   theme: string
   currentTheme: string
@@ -35,10 +36,11 @@ export interface IConfig {
   algodToken: string
 }
 const defaultState: IState = {
-  bff: 'http://localhost:8080',
-  algodHost: 'http://localhost',
-  algodPort: 4001,
-  algodToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+  bff: 'https://mainnet-api.algonode.cloud',
+  algodHost: 'https://mainnet-api.algonode.cloud',
+  algodPort: 443,
+  algodToken: '',
+  explorer: 'https://allo.info/account/',
   appTaskPoolId: getPoolManagerApp('mainnet-v1.0'),
   env: 'mainnet-v1.0',
   envName: 'Algorand Mainnet',
@@ -127,6 +129,7 @@ export const useMainnet = () => {
   app.state.algodToken = ''
   app.state.env = 'mainnet-v1.0'
   app.state.envName = 'Algorand Mainnet'
+  app.state.explorer = 'https://allo.info/account/'
   app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
   app.state.authState = new AuthenticationStore()
   app.state.forceAuth = false
@@ -136,6 +139,7 @@ export const useTestnet = () => {
   app.state.algodHost = 'https://testnet-api.algonode.cloud'
   app.state.algodPort = 443
   app.state.algodToken = ''
+  app.state.explorer = 'https://app.dappflow.org/explorer/account/'
   app.state.env = 'testnet-v1.0'
   app.state.envName = 'Algorand Testnet'
   app.state.appTaskPoolId = getPoolManagerApp(app.state.env)
@@ -147,6 +151,7 @@ export const useVoitest = () => {
   app.state.algodHost = 'https://voitest-api.k1-fi.a-wallet.net'
   app.state.algodPort = 443
   app.state.algodToken = ''
+  app.state.explorer = 'https://voitest-explorer.k1-fi.a-wallet.net/explorer/account/'
   app.state.env = 'voitest-v1'
   app.state.authState = new AuthenticationStore()
   app.state.envName = 'VOI Test'
@@ -159,6 +164,7 @@ export const useSandnet = () => {
   app.state.algodHost = 'http://localhost'
   app.state.algodPort = 4001
   app.state.algodToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  app.state.explorer = 'https://app.dappflow.org/explorer/account/'
   app.state.env = 'sandnet-v1'
   app.state.envName = 'AVM Sandbox'
   //app.state.tokens = tokens
